@@ -1,18 +1,59 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { PantryPanel } from "./components/PantryPanel";
 import { RecipeBrowser } from "./components/RecipeBrowser";
 import { RecipeCart } from "./components/RecipeCart";
 import { Button } from "./components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+async function getRecipes(letter: string = "a") {
+  const res = await fetch(`/home?letter=${letter}`, {
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch recipes");
+  }
+
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}
+
 export default function App() {
   const [isPantryOpen, setIsPantryOpen] = useState(true);
   const [isCartOpen, setIsCartOpen] = useState(true);
 
+  const [recipes, setRecipes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const data = await getRecipes("a");
+        if (!cancelled) setRecipes(data);
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) setRecipes([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
+
   return (
-    <div className="flex h-screen bg-white overflow-hidden min-w-[1200px]">
+    <div
+      data-testid="page-root"
+      className="flex h-screen bg-white overflow-hidden min-w-[1200px]"
+    >
       {/* Pantry Toggle */}
       {!isPantryOpen && (
         <div className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10">
@@ -47,7 +88,7 @@ export default function App() {
       </div>
 
       {/* Middle Panel Recipe Browser */}
-      <RecipeBrowser initialData={recipes}/>
+      <RecipeBrowser initialData={recipes} />
 
       {/* Right Panel - Recipe Cart */}
       <div className="relative">
