@@ -25,8 +25,8 @@ export function RecipeBrowser({ initialData }: { initialData: any[] }) {
   const fetchNewLetter = async (letter: string) => {
     setActiveLetter(letter);
     try{
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'
-      const res = await fetch(`${apiBase}/api/home?letter=${letter}`);
+      //const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'
+      const res = await fetch(`/home?letter=${letter}`);
       const data = await res.json();
       setRecipes(data);
       setCurrentPage(1);
@@ -85,7 +85,7 @@ const handleFilterSelect = async (filterName: string) => {
     <div className="flex-1 flex flex-col h-screen">
       {/* Header */}
       <div className="p-6 border-b">
-        <h1 className="text-2xl font-semibold mb-4">Beavgridients</h1>
+        <h1 className="text-2xl font-semibold mb-4">Beavgredients</h1>
 
       {/* Search and Filter */}
       <div className="flex gap-3">
@@ -108,17 +108,30 @@ const handleFilterSelect = async (filterName: string) => {
             Filter
           </Button>
 
-          {isFilterOpen && (
-            <>
-              {/* Invisible overlay to close dropdown on outside click */}
-              <div 
-                className="fixed inset-0 z-10" 
-                onClick={() => setIsFilterOpen(false)} 
-              />
-              
-              <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-md shadow-lg z-20 py-1 overflow-hidden">
-                <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider bg-gray-50">
-                  Pantry Filters
+      {/* Recipe Grid */}
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="grid grid-cols-3 gap-4">
+          {recipes.map((recipe) => (
+            <div
+              key={recipe.id}
+              className="border rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+            >
+              {/* Recipe Image */}
+              <div className="aspect-video w-full overflow-hidden bg-gray-100">
+                <img
+                  src={recipe.image}
+                  alt={recipe.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              {/* Recipe Info */}
+              <div className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-medium">{recipe.name}</h3>
+                  <Button size="icon" className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 shrink-0">
+                    <span className="text-white text-lg">+</span>
+                  </Button>
                 </div>
                 <button 
                   onClick={() => {
@@ -240,9 +253,8 @@ const handleFilterSelect = async (filterName: string) => {
       </div>
 
       {/* Pagination */}
-      <div className="p-6 border-t bg-white">
-        <div className="flex flex-wrap gap-1.5 max-w-full">
-          {alphabet.map((letter) => (
+      <div className="flex flex-wrap gap-1.5 mb-4 max-w-full">
+           {alphabet.map((letter) => (
             <Button
               key={letter}
               variant={activeLetter === letter ? "default" : "outline"}

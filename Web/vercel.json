@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/home", "destination": "/api/index.js" },
+    { "source": "/search", "destination": "/api/index.js" },
+    { "source": "/api/auth/:match*", "destination": "/api/index.js" },
+    { "source": "/api/ingredients/:match*", "destination": "/api/index.js" }
+  ]
+}
