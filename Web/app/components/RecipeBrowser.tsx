@@ -7,7 +7,6 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 
 const TEST_USER_ID = "cc83483f-40ee-47f1-87eb-62c962c279bc";
-
 type AnyRecipe = any;
 
 export function RecipeBrowser({ initialData }: { initialData: AnyRecipe[] }) {
@@ -55,7 +54,6 @@ export function RecipeBrowser({ initialData }: { initialData: AnyRecipe[] }) {
     setIsFilterOpen(false);
 
     try {
-      // Same-origin: hits your Express server if proxied, or Next if you later move it.
       const res = await fetch(`/home?letter=${letter}`);
       const data = await res.json();
       setRecipes(Array.isArray(data) ? data : []);
@@ -65,15 +63,13 @@ export function RecipeBrowser({ initialData }: { initialData: AnyRecipe[] }) {
     }
   }
 
+  // ✅ FIX: call SAME ORIGIN so preview → preview and prod → prod (no CORS)
   async function handleFilterSelect(filterName: string) {
     setIsFilterOpen(false);
     setIsLoading(true);
 
-    // NOTE: this hits your Express server (5001 local), or whatever NEXT_PUBLIC_API_URL is set to.
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
-
     try {
-      const res = await fetch(`${apiBase}/api/meals/filter`, {
+      const res = await fetch(`/api/meals/filter`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: filterName, userId: TEST_USER_ID }),
@@ -218,7 +214,6 @@ export function RecipeBrowser({ initialData }: { initialData: AnyRecipe[] }) {
                     </Button>
                   </div>
 
-                  {/* Ingredient tags (only if your filter API provides them) */}
                   {(r.displayedIngredients.length > 0 || r.hiddenCount > 0) && (
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {r.displayedIngredients.map((ingredient: string, idx: number) => (
