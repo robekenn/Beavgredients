@@ -55,7 +55,8 @@ export function RecipeBrowser({ initialData }: { initialData: AnyRecipe[] }) {
 
     try {
       const res = await fetch(`/home?letter=${letter}`);
-      const data = await res.json();
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};  
       setRecipes(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch new letter:", err);
