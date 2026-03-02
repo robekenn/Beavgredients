@@ -1,41 +1,23 @@
-async function handleFilterSelect(filterName: string) {
-  setIsFilterOpen(false);
-  setIsLoading(true);
+// api/meals/filter/route.ts
 
+export async function POST(req: Request) {
   try {
-    const res = await fetch(`/api/meals/filter`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: filterName, userId: TEST_USER_ID }),
+    const { type, userId } = await req.json();
+
+    if (!type || !userId) {
+      return Response.json({ ok: false, error: "Missing fields" }, { status: 400 });
+    }
+
+    // 🔥 Replace this with your real filtering logic
+    return Response.json({
+      meals: [],   // return filtered meals here
     });
 
-    const text = await res.text(); // <-- read raw body safely
-    if (!res.ok) {
-      console.error("Filter API error:", res.status, text);
-      throw new Error(`Filter API failed (${res.status})`);
-    }
-
-    if (!text) {
-      console.error("Filter API returned empty body");
-      setRecipes([]);
-      return;
-    }
-
-    let data: any;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      console.error("Filter API returned non-JSON:", text);
-      setRecipes([]);
-      return;
-    }
-
-    const mealArray = data?.meals ? data.meals : Array.isArray(data) ? data : [];
-    setRecipes(mealArray);
-  } catch (err) {
-    console.error("Filtering failed:", err);
-    setRecipes([]);
-  } finally {
-    setIsLoading(false);
+  } catch (err: any) {
+    console.error(err);
+    return Response.json(
+      { ok: false, error: err.message || "Server error" },
+      { status: 500 }
+    );
   }
 }
