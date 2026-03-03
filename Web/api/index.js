@@ -1,80 +1,150 @@
-const mealRoutes = require('./routes/mealRoutes');
+require("dotenv").config();
 
-// display meals 
-app.get("/home", async (req, res) => { // used to be /api/home
+const express = require("express");
+const cors = require("cors");
+const axios = require("axios");
+
+const authRoutes = require("./routes/authRoutes");
+const ingredientRoutes = require("./routes/ingredientRoutes");
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+/* =====================================================
+   GET /api/home?letter=a
+   ===================================================== */
+app.get("/api/home", async (req, res) => {
   try {
     const { letter } = req.query;
-    if (!letter){ // if null return error
-      return res.status(400).json({error: "please provide page letter"});
+    if (!letter) {
+      return res.status(400).json({ error: "please provide page letter" });
     }
-    // fetch the data from meal db
-    const response = await axios.get('https://www.themealdb.com/api/json/v1/1/search.php?', {
-      params: { f: letter }
-    }); 
-    //www.themealdb.com/api/json/v1/1/search.php?f=a
-    // organize data fetched from TheMealDB
-    const rawMealsData = response.data.meals || []; // if meal db returns nothing response is an empty array instead of mapping error
-    const organizedMeals = rawMealsData.map (meal =>({ 
-      id: meal.idMeal,
-      image: meal.strMealThumb,
-      name: meal.strMeal,
-      category: meal.strCategory,
-      area: meal.strArea,
-      recipe: meal.strInstructions
 
-    }));
-    res.json(organizedMeals);
-  }catch(error) { // catch errors from meal db
-    console.error("Error fetching meal data from TheMealDB", error);
-    res.status(500).json({error: "internal server error"});
-  }
-});
+    const response = await axios.get(
+      "https://www.themealdb.com/api/json/v1/1/search.php",
+      { params: { f: letter } }
+    );
 
-// display meals based on search
-app.get("/search", async (req, res) => {
-  try {
-    const { mealName }  = req.query;
-    if (!mealName){ // if null return error
-      return res.status(400).json({error: "please provide meal name"}); 
-    }
-    // fetch the data from meal db
-    const response = await axios.get('https://www.themealdb.com/api/json/v1/1/search.php?', {
-      params: { s: mealName }
-    }); 
-    // organize data fetched from TheMealDB
     const rawMealsData = response.data.meals || [];
-    const organizedMeals = rawMealsData.map (meal =>({ 
+
+    const organizedMeals = rawMealsData.map((meal) => ({
       id: meal.idMeal,
       image: meal.strMealThumb,
       name: meal.strMeal,
       category: meal.strCategory,
       area: meal.strArea,
-      recipe: meal.strInstructions
-
+      recipe: meal.strInstructions,
     }));
+
     res.json(organizedMeals);
-  }catch(error) { // catch errors from meal db
-    console.error("Error fetching meal data from TheMealDB", error);
-    res.status(500).json({error: "internal server error"});
+  } catch (error) {
+    console.error("Error fetching meal data:", error);
+    res.status(500).json({ error: "internal server error" });
   }
 });
 
-// Middleware
-// app.use(cors()); 
+/* =====================================================
+   GET /api/search?mealName=chicken
+   ===================================================== */
+app.get("/api/search", async (req, res) => {
+  try {
+    const { mealName } = req.query;
+    if (!mealName) {
+      return res.status(400).json({ error: "please provide meal name" });
+    }
 
+    const response = await axios.get(
+      "https://www.themealdb.com/api/json/v1/1/search.php",
+      { params: { s: mealName } }
+    );
 
+    const rawMealsData = response.data.meals || [];
 
-// Use the Routes
-// This means all auth routes will start with http://localhost:5000/api/auth
-app.use('/api/auth', authRoutes);
+    const organizedMeals = rawMealsData.map((meal) => ({
+      id: meal.idMeal,
+      image: meal.strMealThumb,
+      name: meal.strMeal,
+      category: meal.strCategory,
+      area: meal.strArea,
+      recipe: meal.strInstructions,
+    }));
 
-// This means ingredient routes will start with http://localhost:5000/api/ingredients
-app.use('/api/ingredients', ingredientRoutes);
+    res.json(organizedMeals);
+  } catch (error) {
+    console.error("Error searching meals:", error);
+    res.status(500).json({ error: "internal server error" });
+  }
+});
 
-app.use('/api/meals', mealRoutes);
+/* =====================================================
+   GET /api/meals/:id  (IMPORTANT FOR CART)
+   Returns FULL meal with strIngredient1..20
+   ===================================================== */
+app.get("/api/meals/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: "meal id required" });
+    }
+
+    const response = await axios.get(
+      "https://www.themealdb.com/api/json/v1/1/lookup.php",
+      { params: { i: id } }
+    );
+
+    const meal = response.data?.meals?.[0];
+    if (!meal) {
+      return res.status(404).json({ error: "meal not found" });
+    }
+
+    // Return full object (includes strIngredient1..20)
+    res.json(meal);
+  } catch (error) {
+    console.error("Error fetching meal details:", error);
+    res.status(500).json({ error: "internal server error" });
+  }
+});
+
+/* =====================================================
+   POST /api/meals/filter
+   Basic category filtering
+   ===================================================== */
+app.post("/api/meals/filter", async (req, res) => {
+  try {
+    const { type } = req.body;
+
+    if (!type) return res.json([]);
+
+    const response = await axios.get(
+      "https://www.themealdb.com/api/json/v1/1/filter.php",
+      { params: { c: type } }
+    );
+
+    const meals = response.data?.meals || [];
+
+    const organizedMeals = meals.map((meal) => ({
+      id: meal.idMeal,
+      image: meal.strMealThumb,
+      name: meal.strMeal,
+      category: type,
+    }));
+
+    res.json(organizedMeals);
+  } catch (error) {
+    console.error("Error filtering meals:", error);
+    res.status(500).json({ error: "internal server error" });
+  }
+});
+
+/* =====================================================
+   Other Routes
+   ===================================================== */
+app.use("/api/auth", authRoutes);
+app.use("/api/ingredients", ingredientRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
