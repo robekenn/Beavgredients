@@ -1,17 +1,31 @@
 const nodemailer = require("nodemailer");
 
+function escapeHtml(str = "") {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
     return res.status(405).json({ ok: false, error: "Use POST" });
   }
 
   try {
-    const { to, subject, message } = req.body ?? {};
+    const { to, subject, message, html } = req.body ?? {};
 
-    if (!to || !subject || !message) {
-      return res.status(400).json({ ok: false, error: "Missing fields" });
+    if (!to || !subject || (!message && !html)) {
+      return res.status(400).json({
+        ok: false,
+        error: "Missing fields: to, subject, and message or html",
+      });
     }
 
+    // NOTE: For Gmail, you usually need an App Password (not your normal password)
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -21,19 +35,19 @@ module.exports = async function handler(req, res) {
     });
 
     const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+      from: process.env.EMAIL_FROM || process.env.SMTP_USER,
       to,
       subject,
-      text: message,
+      text: message || undefined,
+      html: html ? String(html) : message ? `<pre>${escapeHtml(message)}</pre>` : undefined,
     });
 
     return res.status(200).json({
       ok: true,
       messageId: info.messageId,
     });
-
   } catch (err) {
-    console.error(err);
+    console.error("send-email error:", err);
     return res.status(500).json({
       ok: false,
       error: err.message,
