@@ -20,6 +20,7 @@ export const initialPantryData: FoodCategory[] = [
       { name: "Milk", selected: false },
       { name: "White Rice", selected: false },
       { name: "Sugar", selected: false },
+      {name: "Peanut Butter", selected: false},
     ],
   },
   {
