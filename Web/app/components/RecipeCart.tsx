@@ -106,7 +106,8 @@ export function RecipeCart({
       setIsSending(false);
     }
   }
-
+  console.log("Selected Recipes:", selectedRecipes);
+  console.log("First Recipe Object:", selectedRecipes[0]);
   if (!isOpen) return null;
 
   return (
