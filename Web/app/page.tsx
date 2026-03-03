@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { PantryPanel } from "./components/PantryPanel";
 import { RecipeBrowser } from "./components/RecipeBrowser";
 import { RecipeCart } from "./components/RecipeCart";
@@ -9,9 +9,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 async function getRecipes() {
   const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-  const res = await fetch(`${apiBase}/api/home?letter=a`, {
-    cache: "no-store",
-  });
+  const res = await fetch(`${apiBase}/api/home?letter=a`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch data");
   return res.json();
 }
@@ -23,21 +21,23 @@ export default function App() {
   const [recipes, setRecipes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // simple cart state
-  const [kart, setKart] = useState<any[]>([]);
+  // ✅ shared state between PantryPanel + RecipeCart
+  const [pantryItems, setPantryItems] = useState<string[]>([]);
+
+  // ✅ cart state for RecipeCart
+  const [selectedRecipes, setSelectedRecipes] = useState<any[]>([]);
 
   const addToKart = (recipe: any) => {
-    setKart((prev) => {
-      // prevent duplicates by id if possible
-      const id = recipe?.id ?? recipe?.idMeal;
-      if (id != null && prev.some((r) => (r?.id ?? r?.idMeal) === id)) return prev;
+    const id = recipe?.id ?? recipe?.idMeal;
+    setSelectedRecipes((prev) => {
+      if (id == null) return [...prev, recipe];
+      if (prev.some((r) => (r?.id ?? r?.idMeal) === id)) return prev;
       return [...prev, recipe];
     });
   };
 
-  const removeFromKart = (recipe: any) => {
-    const id = recipe?.id ?? recipe?.idMeal;
-    setKart((prev) => prev.filter((r) => (r?.id ?? r?.idMeal) !== id));
+  const removeFromKart = (id: any) => {
+    setSelectedRecipes((prev) => prev.filter((r) => (r?.id ?? r?.idMeal) !== id));
   };
 
   useEffect(() => {
@@ -73,7 +73,12 @@ export default function App() {
 
       {/* Left Panel - Pantry */}
       <div className="relative">
-        <PantryPanel isOpen={isPantryOpen} />
+        <PantryPanel
+          isOpen={isPantryOpen}
+          pantryItems={pantryItems}
+          setPantryItems={setPantryItems}
+        />
+
         {isPantryOpen && (
           <div className="absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 z-10">
             <Button
@@ -89,7 +94,7 @@ export default function App() {
         )}
       </div>
 
-      {/* Middle Panel Recipe Browser */}
+      {/* Middle Panel - Recipe Browser */}
       <RecipeBrowser initialData={recipes} onAddToKart={addToKart} />
 
       {/* Right Panel - Recipe Cart */}
@@ -108,9 +113,12 @@ export default function App() {
           </div>
         )}
 
-        {/* If your RecipeCart already manages its own state, remove these props.
-            If it supports them, this is the clean wiring: */}
-        <RecipeCart isOpen={isCartOpen} kartItems={kart} onRemoveFromKart={removeFromKart} />
+        <RecipeCart
+          isOpen={isCartOpen}
+          selectedRecipes={selectedRecipes}
+          pantryItems={pantryItems}
+          onRemove={removeFromKart}
+        />
       </div>
 
       {/* Cart Toggle */}
