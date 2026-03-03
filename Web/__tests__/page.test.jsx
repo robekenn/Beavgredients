@@ -1,3 +1,6 @@
+process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
+
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Page from "../app/page";
