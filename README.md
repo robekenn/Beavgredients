@@ -24,6 +24,7 @@ Kenneth Robertson
       <ul>
         <li><a href="#prerequisites">Prerequisites</a></li>
         <li><a href="#installation">Installation</a></li>
+        <li><a href="#running-the-application">Running The Application</a></li>
         <li><a href="#build-production">Build Production</a></li>
         <li><a href="#live-deployment">Live Deployment</a></li>
       </ul>
@@ -92,19 +93,36 @@ npm -v
    ```sh
    git clone https://github.com/robekenn/Beavgredients
    ```
-2. Navigate into the project directory:
+2. Navigate into the web directory:
    ```sh
-   cd beavgredients
+   cd beavgredients/web
    ```
-3. Install dependencies:
+3. Install frontend dependencies:
    ```sh
    npm install
    ```
-4. Start the development server:
+4. Navigate into the API folder:
    ```sh
+   cd api
+   ```
+5. Install backend dependancies:
+   ```sh
+   npm install
+   ```
+
+### Running The Application
+With 2 terminals open:
+1. Terminal 1: Start the Backend
+   From inside /web/api:
+   ```sh
+   node index.js
+   ```
+2. Terminal 2: Start the frontend
+   From inside /web
+      ```sh
    npm run dev
    ```
-5. Open your browser and go to:
+3. Open your browser and go to:
    ```sh
    http://localhost:3000
    ```
