@@ -45,6 +45,28 @@ app.get("/api/home", async (req, res) => {
   }
 });
 
+
+// GET /api/meals/:id  -> full meal details (includes strIngredient1..20)
+app.get("/api/meals/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ error: "meal id required" });
+
+    const response = await axios.get(
+      "https://www.themealdb.com/api/json/v1/1/lookup.php",
+      { params: { i: id } }
+    );
+
+    const meal = response.data?.meals?.[0];
+    if (!meal) return res.status(404).json({ error: "meal not found" });
+
+    res.json(meal); // full MealDB object
+  } catch (err) {
+    console.error("Error fetching meal details:", err);
+    res.status(500).json({ error: "internal server error" });
+  }
+});
+
 /* =====================================================
    GET /api/search?mealName=chicken
    ===================================================== */
