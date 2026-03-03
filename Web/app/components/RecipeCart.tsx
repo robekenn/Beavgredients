@@ -36,13 +36,18 @@ export function RecipeCart({ isOpen }: { isOpen: boolean }) {
 
     setIsSending(true);
     try {
-      const res = await fetch("/api/send-email", {
+      const res = await fetch("https://beavgredient.onrender.com/api/send-email.js", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          to,
-          subject: "Your BeavGredients Shopping List",
-          message: emailBody,
+          to: "someone@gmail.com",
+          subject: "This Week’s Dinners",
+          title: "Meal Plan (Recipes Included)",
+          introMessage: "Here are the dinners + full recipes.",
+          meals: [
+            { id: "52772", day: "Monday" },
+            { id: "52874", day: "Tuesday" },
+          ],
         }),
       });
 
