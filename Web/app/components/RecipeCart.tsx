@@ -1,16 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { X } from "lucide-react";
+import { X, ShoppingBag } from "lucide-react";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 
-interface SelectedRecipe {
-  id: number;
-  name: string;
+interface RecipeCartProps {
+  isOpen: boolean;
+  selectedRecipes: any[];
+  pantryItems: string[];
+  onRemove: (id: any) => void;
 }
 
-export function RecipeCart({ isOpen }: { isOpen: boolean }) {
+export function RecipeCart({ isOpen, selectedRecipes, pantryItems, onRemove }: RecipeCartProps) {
   const [isSending, setIsSending] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
@@ -49,15 +51,15 @@ const missingIngredients = useMemo(() => {
 
   // --- LOGIC: GENERATE EMAIL TEXT ---
   const emailBody = useMemo(() => {
-    const recipeLines = selectedRecipes.map(r => `- ${r.name}`).join("\n");
+    const recipeLines = selectedRecipes.map(r => `- ${r.name || r.strMeal}`).join("\n");
     const ingredientLines = missingIngredients.map(i => `- ${i}`).join("\n");
-    return `Your BeavGredients Cooking Plan\n\nSelected Recipes:\n${recipeLines}\n\nMissing Ingredients:\n${ingredientLines}\n`;
+    return `Your BeavGredients Cooking Plan\n\nSelected Recipes:\n${recipeLines}\n\nMissing Ingredients (Shopping List):\n${ingredientLines}\n`;
   }, [selectedRecipes, missingIngredients]);
 
+  // --- ACTION: SEND EMAIL ---
   async function handleStartCooking() {
     setStatus(null);
 
-    // TODO: replace this with the signed-in user's email later
     const to = window.prompt("What email should I send your shopping list to?");
     if (!to) return;
 
@@ -80,6 +82,8 @@ const missingIngredients = useMemo(() => {
       }
 
       setStatus("Email sent! Check your inbox.");
+      // Clear status after 5 seconds
+      setTimeout(() => setStatus(null), 5000);
     } catch (err: any) {
       setStatus(`Failed to send: ${err.message}`);
     } finally {
@@ -90,75 +94,79 @@ const missingIngredients = useMemo(() => {
   if (!isOpen) return null;
 
   return (
-    <div className="w-80 border-l bg-white h-screen flex flex-col">
-      {/* Header */}
-      <div className="p-6 border-b">
-        <h2 className="text-xl font-semibold">Recipe Kart</h2>
+    <div className="w-80 border-l bg-white h-screen flex flex-col shadow-xl">
+      <div className="p-6 border-b shrink-0">
+        <h2 className="text-xl font-bold">Recipe Kart</h2>
       </div>
 
-      {/* Selected Recipes */}
-      <div className="p-6 border-b">
-        <h3 className="font-medium mb-4">Selected Recipes</h3>
-        <div className="space-y-2">
-          {selectedRecipes.map((recipe) => (
-            <div
-              key={recipe.id}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-            >
-              <span className="text-sm">{recipe.name}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 bg-red-500 hover:bg-red-600 rounded-full"
-              >
-                <X className="h-4 w-4 text-white" />
-              </Button>
+      <ScrollArea className="flex-1">
+        <div className="p-6 space-y-8">
+          
+          {/* Section: Selected Recipes */}
+          <section>
+            <h3 className="text-xs font-bold text-gray-400 uppercase mb-4 tracking-widest">
+              Selected ({selectedRecipes.length})
+            </h3>
+            <div className="space-y-2">
+              {selectedRecipes.map((recipe) => (
+                <div key={recipe.id || recipe.idMeal} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg group">
+                  <span className="text-sm font-medium truncate">{recipe.name || recipe.strMeal}</span>
+                  <Button 
+                    variant="ghost" size="icon" 
+                    className="h-6 w-6 bg-red-500 hover:bg-red-600 rounded-full"
+                    onClick={() => onRemove(recipe.id || recipe.idMeal)}
+                  >
+                    <X className="h-4 w-4 text-white" />
+                  </Button>
+                </div>
+              ))}
             </div>
-          ))}
+          </section>
+
+          {/* Section: Missing Ingredients */}
+          <section className="pt-6 border-t">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Shopping List</h3>
+              {missingIngredients.length > 0 && (
+                <span className="text-[10px] font-bold bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full">
+                  {missingIngredients.length} TO BUY
+                </span>
+              )}
+            </div>
+            
+            <ul className="space-y-2">
+              {missingIngredients.length > 0 ? (
+                missingIngredients.map((item, idx) => (
+                  <li key={idx} className="flex items-center gap-2 text-sm text-gray-700 capitalize">
+                    <div className="h-1.5 w-1.5 rounded-full bg-orange-500 shrink-0" />
+                    {item}
+                  </li>
+                ))
+              ) : (
+                <p className="text-xs text-gray-400 italic">
+                  {selectedRecipes.length > 0 ? "You have everything in your pantry!" : "Add a recipe to see what's missing."}
+                </p>
+              )}
+            </ul>
+          </section>
         </div>
-      </div>
+      </ScrollArea>
 
-      {/* Summary */}
-      <div className="p-6 border-b">
-        <h3 className="font-medium mb-4">Summary</h3>
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Total Recipes:</span>
-            <span className="font-medium">{selectedRecipes.length}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Missing Ingredients:</span>
-            <span className="font-medium">{missingIngredients.length}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Missing Ingredients */}
-      <div className="flex-1 p-6 border-b">
-        <h3 className="font-medium mb-4">Missing Ingredients</h3>
-        <ScrollArea className="h-40">
-          <ul className="space-y-2">
-            {missingIngredients.map((ingredient, idx) => (
-              <li key={idx} className="text-sm flex items-start">
-                <span className="mr-2">•</span>
-                <span>{ingredient}</span>
-              </li>
-            ))}
-          </ul>
-        </ScrollArea>
-      </div>
-
-      {/* Send Email Button */}
-      <div className="p-6 space-y-2">
-        <Button
-          className="w-full bg-black hover:bg-gray-800 text-white"
+      {/* Start Cooking Button & Status */}
+      <div className="p-6 border-t bg-gray-50 space-y-3">
+        {status && (
+          <p className={`text-xs font-medium text-center p-2 rounded ${status.includes('Failed') ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+            {status}
+          </p>
+        )}
+        <Button 
+          className="w-full bg-black hover:bg-gray-800 text-white font-bold h-12 flex gap-2"
+          disabled={selectedRecipes.length === 0 || isSending}
           onClick={handleStartCooking}
-          disabled={isSending}
         >
+          <ShoppingBag className="h-4 w-4" />
           {isSending ? "Sending..." : "Start Cooking"}
         </Button>
-
-        {status && <p className="text-sm">{status}</p>}
       </div>
     </div>
   );
