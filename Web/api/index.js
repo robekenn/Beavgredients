@@ -1,18 +1,20 @@
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
 const axios = require("axios");
 
 const app = express();
-app.use(express.json());
+app.use(express.json()); 
 
-app.use(
-  cors({
-    origin: "*", // tighten later to your frontend URL
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  })
-);
+//On deployment replace * with vercel url * means allow everything which is fine for now
+app.use(cors({
+  origin: '*', //https://beavgredients.vercel.app
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+
+
+// require('dotenv').config();
 
 // Import the Routes
 const authRoutes = require('./routes/authRoutes');
@@ -53,9 +55,9 @@ app.get("/api/home", async (req, res) => { // used to be /api/home
   return formatted;
 });
     res.json(organizedMeals);
-  } catch (error) {
+  }catch(error) { // catch errors from meal db
     console.error("Error fetching meal data from TheMealDB", error);
-    res.status(500).json({ error: "internal server error" });
+    res.status(500).json({error: "internal server error"});
   }
 });
 
@@ -92,15 +94,23 @@ app.get("/api/search", async (req, res) => {
   return formatted;
 });
     res.json(organizedMeals);
-  } catch (error) {
+  }catch(error) { // catch errors from meal db
     console.error("Error fetching meal data from TheMealDB", error);
-    res.status(500).json({ error: "internal server error" });
+    res.status(500).json({error: "internal server error"});
   }
 });
 
+// Middleware
+// app.use(cors()); 
+
+
+
 // Use the Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/ingredients", ingredientRoutes);
+// This means all auth routes will start with http://localhost:5000/api/auth
+app.use('/api/auth', authRoutes);
+
+// This means ingredient routes will start with http://localhost:5000/api/ingredients
+app.use('/api/ingredients', ingredientRoutes);
 
 app.use('/api/meals', mealRoutes);
 
@@ -108,4 +118,3 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-

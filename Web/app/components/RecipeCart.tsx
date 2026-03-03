@@ -49,7 +49,7 @@ export function RecipeCart({ isOpen, selectedRecipes, pantryItems, onRemove }: R
     if (!to) return;
     setIsSending(true);
     try {
-      const res = await fetch("https://beavgredient.onrender.com/api/send-email.js", {
+      const res = await fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ to, subject: "Your BeavGredients Shopping List", message: emailBody }),
