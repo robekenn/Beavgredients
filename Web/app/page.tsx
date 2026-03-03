@@ -17,6 +17,7 @@ async function getRecipes() {
 export default function App() {
   const [isPantryOpen, setIsPantryOpen] = useState(true);
   const [isCartOpen, setIsCartOpen] = useState(true);
+  const [addingIds, setAddingIds] = useState<Set<string>>(new Set());
 
   const [recipes, setRecipes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,55 +28,65 @@ export default function App() {
   // ✅ cart state for RecipeCart
   const [selectedRecipes, setSelectedRecipes] = useState<any[]>([]);
 
-  const addToKart = async (recipe: any) => {
-  console.log("[page] addToKart called with:", recipe);
-
-  const id = recipe?.id ?? recipe?.idMeal;
+const addToKart = async (recipe: any) => {
+  const id = String(recipe?.id ?? recipe?.idMeal ?? "");
   if (!id) return;
 
-  // prevent duplicates
-  setSelectedRecipes((prev) => {
-    if (prev.some((r) => (r?.id ?? r?.idMeal) === id)) return prev;
-    return prev;
+  // Prevent duplicate adds if already selected
+  if (selectedRecipes.some((r) => String(r?.id ?? r?.idMeal ?? "") === id)) return;
+
+  // Prevent double-click spam while request is in-flight
+  if (addingIds.has(id)) return;
+
+  setAddingIds((prev) => {
+    const next = new Set(prev);
+    next.add(id);
+    return next;
   });
 
   try {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-    // IMPORTANT: adjust this endpoint to whatever returns full meal details
-    // Common choices:
-    // 1) /api/meals/:id
-    // 2) /api/meal/:id
-    // 3) /api/meals/details?id=...
-    const res = await fetch(`${apiBase}/api/meals/${id}`, { cache: "no-store" });
+    const res = await fetch(`${apiBase}/api/meals/${id}`, {
+      cache: "no-store",
+    });
 
-    let full = recipe;
+    // If fetch fails, fall back to partial object
+    let fullMeal = recipe;
+
     if (res.ok) {
       const data = await res.json();
 
-      // Support both shapes:
-      // - { meal: {...} }
-      // - {...}
-      // - { meals: [{...}] } (MealDB style)
-      full =
-        data?.meal ??
-        (Array.isArray(data?.meals) ? data.meals[0] : null) ??
-        data ??
-        recipe;
+      // data is a full MealDB object from your backend
+      fullMeal = data ?? recipe;
+
+      // Optional: keep your simplified fields too
+      // (so the cart list uses name/image consistently)
+      if (!fullMeal.name && fullMeal.strMeal) fullMeal.name = fullMeal.strMeal;
+      if (!fullMeal.image && fullMeal.strMealThumb) fullMeal.image = fullMeal.strMealThumb;
+      if (!fullMeal.id && fullMeal.idMeal) fullMeal.id = fullMeal.idMeal;
     } else {
-      console.warn("[page] could not fetch full details, adding partial recipe");
+      console.warn("[addToKart] details fetch failed:", res.status);
     }
 
+    // Add exactly once (re-check inside setState to avoid race conditions)
     setSelectedRecipes((prev) => {
-      if (prev.some((r) => (r?.id ?? r?.idMeal) === id)) return prev;
-      return [...prev, full];
+      if (prev.some((r) => String(r?.id ?? r?.idMeal ?? "") === id)) return prev;
+      return [...prev, fullMeal];
     });
-  } catch (e) {
-    console.error("[page] addToKart detail fetch failed:", e);
-    // fallback: add partial
+  } catch (err) {
+    console.error("[addToKart] error fetching details:", err);
+
+    // Fallback: still add the partial recipe if it isn't already there
     setSelectedRecipes((prev) => {
-      if (prev.some((r) => (r?.id ?? r?.idMeal) === id)) return prev;
+      if (prev.some((r) => String(r?.id ?? r?.idMeal ?? "") === id)) return prev;
       return [...prev, recipe];
+    });
+  } finally {
+    setAddingIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
     });
   }
 };
