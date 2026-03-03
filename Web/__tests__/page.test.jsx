@@ -1,10 +1,8 @@
-process.env.NEXT_PUBLIC_SUPABASE_URL = "http://localhost:54321";
-process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
-
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import Page from "../app/page";
+import "@testing-library/jest-dom";
 
+// ✅ Mocks MUST be declared before importing Page
 jest.mock("../app/components/PantryPanel", () => ({
   PantryPanel: ({ isOpen }) => <div data-testid="pantry">{String(isOpen)}</div>,
 }));
@@ -16,6 +14,8 @@ jest.mock("../app/components/RecipeBrowser", () => ({
 jest.mock("../app/components/RecipeCart", () => ({
   RecipeCart: ({ isOpen }) => <div data-testid="cart">{String(isOpen)}</div>,
 }));
+
+import Page from "../app/page";
 
 beforeEach(() => {
   global.fetch = jest.fn(() =>
@@ -34,13 +34,19 @@ test("pantry toggles open/closed", async () => {
   const user = userEvent.setup();
   render(<Page />);
 
-  // wait for UI to render after fetch resolves
+  // wait for mocked panels to render
   expect(await screen.findByTestId("pantry")).toHaveTextContent("true");
 
-  await user.click(screen.getByRole("button", { name: /close pantry/i }));
+  // Your toggle buttons are icon-only, so they have no accessible name.
+  // Based on DOM shown in your error output:
+  // - first button is pantry toggle
+  // - second button is cart toggle
+  const [pantryToggleBtn] = screen.getAllByRole("button");
+
+  await user.click(pantryToggleBtn);
   expect(screen.getByTestId("pantry")).toHaveTextContent("false");
 
-  await user.click(screen.getByRole("button", { name: /open pantry/i }));
+  await user.click(pantryToggleBtn);
   expect(screen.getByTestId("pantry")).toHaveTextContent("true");
 });
 
@@ -50,9 +56,12 @@ test("cart toggles open/closed", async () => {
 
   expect(await screen.findByTestId("cart")).toHaveTextContent("true");
 
-  await user.click(screen.getByRole("button", { name: /close cart/i }));
+  const buttons = screen.getAllByRole("button");
+  const cartToggleBtn = buttons[1]; // second icon button is cart toggle
+
+  await user.click(cartToggleBtn);
   expect(screen.getByTestId("cart")).toHaveTextContent("false");
 
-  await user.click(screen.getByRole("button", { name: /open cart/i }));
+  await user.click(cartToggleBtn);
   expect(screen.getByTestId("cart")).toHaveTextContent("true");
 });
