@@ -1,24 +1,3 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const axios = require("axios");
-
-const app = express();
-app.use(express.json()); 
-
-//On deployment replace * with vercel url * means allow everything which is fine for now
-app.use(cors({
-  origin: '*', //https://beavgredients.vercel.app
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
-}));
-
-
-// require('dotenv').config();
-
-// Import the Routes
-const authRoutes = require('./routes/authRoutes');
-const ingredientRoutes = require('./routes/ingredientRoutes');
 const mealRoutes = require('./routes/mealRoutes');
 
 // display meals 
