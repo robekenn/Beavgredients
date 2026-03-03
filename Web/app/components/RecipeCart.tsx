@@ -12,6 +12,32 @@ interface RecipeCartProps {
   onRemove: (id: any) => void;
 }
 
+function extractIngredientNames(recipe: any): string[] {
+  // MealDB style: strIngredient1..20
+  const mealDb: string[] = [];
+  for (let i = 1; i <= 20; i++) {
+    const ing = recipe?.[`strIngredient${i}`];
+    if (typeof ing === "string" && ing.trim()) mealDb.push(ing.trim());
+  }
+  if (mealDb.length) return mealDb;
+
+  // Array style: ingredients: string[]
+  if (Array.isArray(recipe?.ingredients)) {
+    return recipe.ingredients
+      .filter((x: any) => typeof x === "string" && x.trim())
+      .map((s: string) => s.trim());
+  }
+
+  // Your UI chips: displayedIngredients: string[]
+  if (Array.isArray(recipe?.displayedIngredients)) {
+    return recipe.displayedIngredients
+      .filter((x: any) => typeof x === "string" && x.trim())
+      .map((s: string) => s.trim());
+  }
+
+  return [];
+}
+
 export function RecipeCart({
   isOpen,
   selectedRecipes,
@@ -21,37 +47,27 @@ export function RecipeCart({
   const [isSending, setIsSending] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
-  // --- LOGIC: CALCULATE MISSING ITEMS ---
   const missingIngredients = useMemo(() => {
-    const selectedPantryNames = (pantryItems || []).map((p) =>
-      String(p).toLowerCase().trim()
-    );
-
+    const pantry = (pantryItems || []).map((p) => String(p).toLowerCase().trim());
     const missing: string[] = [];
 
     (selectedRecipes || []).forEach((recipe: any) => {
-      for (let i = 1; i <= 20; i++) {
-        const ing = recipe?.[`strIngredient${i}`];
+      const ingredients = extractIngredientNames(recipe);
 
-        if (ing && typeof ing === "string" && ing.trim() !== "") {
-          const cleanRecipeIng = ing.toLowerCase().trim();
+      ingredients.forEach((ing) => {
+        const cleanIng = ing.toLowerCase().trim();
 
-          const isFoundInPantry = selectedPantryNames.some(
-            (pantryName) =>
-              cleanRecipeIng === pantryName ||
-              cleanRecipeIng.includes(pantryName) ||
-              pantryName.includes(cleanRecipeIng)
-          );
+        const found = pantry.some(
+          (p) => cleanIng === p || cleanIng.includes(p) || p.includes(cleanIng)
+        );
 
-          if (!isFoundInPantry) missing.push(ing);
-        }
-      }
+        if (!found) missing.push(ing);
+      });
     });
 
     return Array.from(new Set(missing));
   }, [selectedRecipes, pantryItems]);
 
-  // --- LOGIC: GENERATE EMAIL TEXT ---
   const emailBody = useMemo(() => {
     const recipeLines = (selectedRecipes || [])
       .map((r) => `- ${r?.name || r?.strMeal || "Unknown"}`)
@@ -81,10 +97,7 @@ export function RecipeCart({
       });
 
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data?.error || "Failed to send email");
-      }
+      if (!res.ok) throw new Error(data?.error || "Failed to send email");
 
       setStatus("Email sent! Check your inbox.");
     } catch (err: any) {
@@ -98,12 +111,10 @@ export function RecipeCart({
 
   return (
     <div className="w-80 border-l bg-white h-screen flex flex-col">
-      {/* Header */}
       <div className="p-6 border-b">
         <h2 className="text-xl font-semibold">Recipe Kart</h2>
       </div>
 
-      {/* Selected Recipes */}
       <div className="p-6 border-b">
         <h3 className="font-medium mb-4">Selected Recipes</h3>
 
@@ -121,7 +132,6 @@ export function RecipeCart({
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                 >
                   <span className="text-sm truncate pr-2">{name}</span>
-
                   <Button
                     variant="ghost"
                     size="icon"
@@ -138,7 +148,6 @@ export function RecipeCart({
         )}
       </div>
 
-      {/* Summary */}
       <div className="p-6 border-b">
         <h3 className="font-medium mb-4">Summary</h3>
         <div className="space-y-2">
@@ -153,7 +162,6 @@ export function RecipeCart({
         </div>
       </div>
 
-      {/* Missing Ingredients */}
       <div className="flex-1 p-6 border-b">
         <h3 className="font-medium mb-4">Missing Ingredients</h3>
         <ScrollArea className="h-40">
@@ -176,7 +184,6 @@ export function RecipeCart({
         </ScrollArea>
       </div>
 
-      {/* Send Email Button */}
       <div className="p-6 space-y-2">
         <Button
           className="w-full bg-black hover:bg-gray-800 text-white"
