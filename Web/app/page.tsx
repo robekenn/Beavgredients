@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState, useEffect } from "react";
 import { PantryPanel } from "./components/PantryPanel";
@@ -7,15 +7,13 @@ import { RecipeCart } from "./components/RecipeCart";
 import { Button } from "./components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-async function getRecipes(){
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+async function getRecipes() {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
   const res = await fetch(`${apiBase}/api/home?letter=a`, {
-    cache: 'no-store', // ensure fresh data every request
+    cache: "no-store",
   });
-  if (!res.ok){
-    throw new Error('Failed to fetch data');
-  }
-  return res.json();//[{id: 1, name: "Test Pasta", image: "https://placehold.co"}];//res.json();
+  if (!res.ok) throw new Error("Failed to fetch data");
+  return res.json();
 }
 
 export default function App() {
@@ -25,21 +23,39 @@ export default function App() {
   const [recipes, setRecipes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    getRecipes().then(data =>{
-      setRecipes(data);
-      setLoading(false);
-    })
-    .catch(err => {
-      console.error(err);
-      setLoading(false);
+  // simple cart state
+  const [kart, setKart] = useState<any[]>([]);
+
+  const addToKart = (recipe: any) => {
+    setKart((prev) => {
+      // prevent duplicates by id if possible
+      const id = recipe?.id ?? recipe?.idMeal;
+      if (id != null && prev.some((r) => (r?.id ?? r?.idMeal) === id)) return prev;
+      return [...prev, recipe];
     });
+  };
+
+  const removeFromKart = (recipe: any) => {
+    const id = recipe?.id ?? recipe?.idMeal;
+    setKart((prev) => prev.filter((r) => (r?.id ?? r?.idMeal) !== id));
+  };
+
+  useEffect(() => {
+    getRecipes()
+      .then((data) => {
+        setRecipes(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
   }, []);
 
-  if (loading) return <div>Loading...</div>
+  if (loading) return <div>Loading...</div>;
 
   return (
-     <div data-testid="page-root" className="flex h-screen bg-white overflow-hidden min-w-[1200px]">
+    <div data-testid="page-root" className="flex h-screen bg-white overflow-hidden min-w-[1200px]">
       {/* Pantry Toggle */}
       {!isPantryOpen && (
         <div className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10">
@@ -74,7 +90,7 @@ export default function App() {
       </div>
 
       {/* Middle Panel Recipe Browser */}
-      <RecipeBrowser initialData={recipes}/>
+      <RecipeBrowser initialData={recipes} onAddToKart={addToKart} />
 
       {/* Right Panel - Recipe Cart */}
       <div className="relative">
@@ -91,7 +107,10 @@ export default function App() {
             </Button>
           </div>
         )}
-        <RecipeCart isOpen={isCartOpen} />
+
+        {/* If your RecipeCart already manages its own state, remove these props.
+            If it supports them, this is the clean wiring: */}
+        <RecipeCart isOpen={isCartOpen} kartItems={kart} onRemoveFromKart={removeFromKart} />
       </div>
 
       {/* Cart Toggle */}
