@@ -46,6 +46,9 @@ export function RecipeCart({
 }: RecipeCartProps) {
   const [isSending, setIsSending] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  // ===== DEBUG HELPERS =====
+const DEBUG = true; // set false to silence logs
+const debug = (...args: any[]) => DEBUG && console.log("[RecipeCart]", ...args);
 
   const missingIngredients = useMemo(() => {
     const pantry = (pantryItems || []).map((p) => String(p).toLowerCase().trim());
@@ -67,6 +70,29 @@ export function RecipeCart({
 
     return Array.from(new Set(missing));
   }, [selectedRecipes, pantryItems]);
+  // ===== DEBUG OUTPUT =====
+debug("pantryItems:", pantryItems);
+debug("selectedRecipes length:", selectedRecipes?.length);
+debug("selectedRecipes[0]:", selectedRecipes?.[0]);
+debug("missingIngredients:", missingIngredients);
+
+// show which ingredient fields exist on the first recipe
+if (selectedRecipes?.[0]) {
+  const r0 = selectedRecipes[0];
+  debug("first recipe keys:", Object.keys(r0));
+  debug(
+    "has strIngredient1?:",
+    typeof r0?.strIngredient1 !== "undefined",
+    "value:",
+    r0?.strIngredient1
+  );
+  debug("has ingredients array?:", Array.isArray(r0?.ingredients), r0?.ingredients);
+  debug(
+    "has displayedIngredients array?:",
+    Array.isArray(r0?.displayedIngredients),
+    r0?.displayedIngredients
+  );
+}
 
   const emailBody = useMemo(() => {
     const recipeLines = (selectedRecipes || [])
@@ -106,8 +132,6 @@ export function RecipeCart({
       setIsSending(false);
     }
   }
-  console.log("Selected Recipes:", selectedRecipes);
-  console.log("First Recipe Object:", selectedRecipes[0]);
   if (!isOpen) return null;
 
   return (

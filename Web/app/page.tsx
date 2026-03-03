@@ -28,17 +28,32 @@ export default function App() {
   const [selectedRecipes, setSelectedRecipes] = useState<any[]>([]);
 
   const addToKart = (recipe: any) => {
-    const id = recipe?.id ?? recipe?.idMeal;
-    setSelectedRecipes((prev) => {
-      if (id == null) return [...prev, recipe];
-      if (prev.some((r) => (r?.id ?? r?.idMeal) === id)) return prev;
-      return [...prev, recipe];
-    });
-  };
+  console.log("[page] addToKart called with:", recipe);
 
-  const removeFromKart = (id: any) => {
-    setSelectedRecipes((prev) => prev.filter((r) => (r?.id ?? r?.idMeal) !== id));
-  };
+  const id = recipe?.id ?? recipe?.idMeal;
+
+  setSelectedRecipes((prev) => {
+    const exists =
+      id != null && prev.some((r) => (r?.id ?? r?.idMeal) === id);
+
+    console.log("[page] before add:", prev.length, "exists:", exists);
+
+    if (exists) return prev;
+    const next = [...prev, recipe];
+    console.log("[page] after add:", next.length);
+    return next;
+  });
+};
+
+const removeFromKart = (id: any) => {
+  console.log("[page] removeFromKart called with id:", id);
+
+  setSelectedRecipes((prev) => {
+    const next = prev.filter((r) => (r?.id ?? r?.idMeal) !== id);
+    console.log("[page] before remove:", prev.length, "after remove:", next.length);
+    return next;
+  });
+};
 
   useEffect(() => {
     getRecipes()
