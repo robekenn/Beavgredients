@@ -27,22 +27,57 @@ export default function App() {
   // ✅ cart state for RecipeCart
   const [selectedRecipes, setSelectedRecipes] = useState<any[]>([]);
 
-  const addToKart = (recipe: any) => {
+  const addToKart = async (recipe: any) => {
   console.log("[page] addToKart called with:", recipe);
 
   const id = recipe?.id ?? recipe?.idMeal;
+  if (!id) return;
 
+  // prevent duplicates
   setSelectedRecipes((prev) => {
-    const exists =
-      id != null && prev.some((r) => (r?.id ?? r?.idMeal) === id);
-
-    console.log("[page] before add:", prev.length, "exists:", exists);
-
-    if (exists) return prev;
-    const next = [...prev, recipe];
-    console.log("[page] after add:", next.length);
-    return next;
+    if (prev.some((r) => (r?.id ?? r?.idMeal) === id)) return prev;
+    return prev;
   });
+
+  try {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+    // IMPORTANT: adjust this endpoint to whatever returns full meal details
+    // Common choices:
+    // 1) /api/meals/:id
+    // 2) /api/meal/:id
+    // 3) /api/meals/details?id=...
+    const res = await fetch(`${apiBase}/api/meals/${id}`, { cache: "no-store" });
+
+    let full = recipe;
+    if (res.ok) {
+      const data = await res.json();
+
+      // Support both shapes:
+      // - { meal: {...} }
+      // - {...}
+      // - { meals: [{...}] } (MealDB style)
+      full =
+        data?.meal ??
+        (Array.isArray(data?.meals) ? data.meals[0] : null) ??
+        data ??
+        recipe;
+    } else {
+      console.warn("[page] could not fetch full details, adding partial recipe");
+    }
+
+    setSelectedRecipes((prev) => {
+      if (prev.some((r) => (r?.id ?? r?.idMeal) === id)) return prev;
+      return [...prev, full];
+    });
+  } catch (e) {
+    console.error("[page] addToKart detail fetch failed:", e);
+    // fallback: add partial
+    setSelectedRecipes((prev) => {
+      if (prev.some((r) => (r?.id ?? r?.idMeal) === id)) return prev;
+      return [...prev, recipe];
+    });
+  }
 };
 
 const removeFromKart = (id: any) => {
