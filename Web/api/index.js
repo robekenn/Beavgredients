@@ -100,6 +100,61 @@ app.get("/api/search", async (req, res) => {
   }
 });
 
+// get detailed meal information by ID
+app.get("/api/meals/:mealId", async (req, res) => {
+  try {
+    const { mealId } = req.params;
+    if (!mealId) {
+      return res.status(400).json({ error: "please provide meal ID" });
+    }
+    
+    // fetch the meal details from TheMealDB
+    const response = await axios.get(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${mealId}`);
+    
+    const meals = response.data.meals;
+    if (!meals || meals.length === 0) {
+      return res.status(404).json({ error: "meal not found" });
+    }
+    
+    const meal = meals[0];
+    
+    // extract ingredients and measurements
+    const ingredients = [];
+    for (let i = 1; i <= 20; i++) {
+      const ingredient = meal[`strIngredient${i}`];
+      const measure = meal[`strMeasure${i}`];
+      
+      if (ingredient && ingredient.trim()) {
+        ingredients.push({
+          name: ingredient.trim(),
+          measure: measure ? measure.trim() : ""
+        });
+      }
+    }
+    
+    // organize the response
+    const detailedMeal = {
+      idMeal: meal.idMeal,
+      strMeal: meal.strMeal,
+      strCategory: meal.strCategory,
+      strArea: meal.strArea,
+      strInstructions: meal.strInstructions,
+      strMealThumb: meal.strMealThumb,
+      strTags: meal.strTags,
+      strYoutube: meal.strYoutube,
+      strSource: meal.strSource,
+      ingredients: ingredients
+    };
+    
+    res.json(detailedMeal);
+  } catch (error) {
+    console.error("Error fetching meal details from TheMealDB:", error);
+    res.status(500).json({ error: "internal server error" });
+  }
+});
+
+
+
 // Middleware
 // app.use(cors()); 
 
