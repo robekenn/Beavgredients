@@ -220,15 +220,13 @@ export function RecipeCart({
   }, [selectedRecipes, missingIngredients, missingByRecipe]);
 
   async function handleStartCooking() {
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    console.log("Attempting to send email to:", `${apiBase}/api/send-email`);
     setStatus(null);
     const to = window.prompt("What email should I send your cooking plan to?");
     if (!to) return;
 
     setIsSending(true);
     try {
-      const res = await fetch(`${apiBase}/api/send-email`, {
+      const res = await fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
