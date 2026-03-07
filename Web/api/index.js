@@ -75,21 +75,19 @@ app.get("/api/search", async (req, res) => {
     // organize data fetched from TheMealDB
     const rawMealsData = response.data.meals || [];
     const organizedMeals = rawMealsData.map(meal => {
-  // 1. Start with the basic info
-  const formatted = {
-    id: meal.idMeal,
-    image: meal.strMealThumb,
-    name: meal.strMeal,
-    category: meal.strCategory,
-    area: meal.strArea,
-    recipe: meal.strInstructions,
-  };
+    const formatted = {
+      id: meal.idMeal,
+      image: meal.strMealThumb,
+      name: meal.strMeal,
+      category: meal.strCategory,
+      area: meal.strArea,
+      recipe: meal.strInstructions,
+    };
 
-  // 2. Loop through and add all 20 ingredients so the Kart can see them
-  for (let i = 1; i <= 20; i++) {
-    formatted[`strIngredient${i}`] = meal[`strIngredient${i}`];
-    formatted[`strMeasure${i}`] = meal[`strMeasure${i}`];
-  }
+    for (let i = 1; i <= 20; i++) {
+      formatted[`strIngredient${i}`] = meal[`strIngredient${i}`];
+      formatted[`strMeasure${i}`] = meal[`strMeasure${i}`];
+    }
 
   return formatted;
 });
