@@ -43,7 +43,12 @@ static async filterByPantry(userId, filterType) {
     const pantryNames = dbIngredients.map(i => i.name.toLowerCase().replace(/_/g, ' ').trim());
 
     // Seeding logic to avoid "sugar/water/salt"
-    const common = ['sugar', 'egg', 'eggs', 'salt', 'water', 'flour', 'milk'];
+    const common = [
+    'sugar', 'egg', 'eggs', 'salt', 'water', 'flour', 'milk', 
+    'olive oil', 'vegetable oil', 'butter', 'black pepper', 
+    'garlic powder', 'onion powder', 'baking powder', 'baking soda',
+    'white vinegar', 'vanilla extract', 'lemon juice', 'cornstarch'
+    ];
     const rare = pantryNames.filter(ing => !common.includes(ing));
     const seed = rare.length > 0 ? rare[0] : pantryNames[0];
     const apiTerm = seed.replace(/\s+/g, '_');
