@@ -74,12 +74,6 @@ export function PantryPanel({ isOpen, pantryItems, setPantryItems }: PantryPanel
         <h2 className="font-semibold">Pantry</h2>
       </div>
 
-      <div className="p-4 border-b">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input placeholder="Add Ingredients" className="pl-10" />
-        </div>
-      </div>
 
       <div className="flex-1 overflow-y-auto">
         {categories.map((category, categoryIndex) => (
