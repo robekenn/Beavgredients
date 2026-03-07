@@ -8,7 +8,7 @@ app.use(express.json());
 
 //On deployment replace * with vercel url * means allow everything which is fine for now
 app.use(cors({
-  origin: true, 
+  origin: '*', //https://beavgredients.vercel.app
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
@@ -113,17 +113,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/ingredients', ingredientRoutes);
 
 app.use('/api/meals', mealRoutes);
-
-const sendEmailHandler = require('./send-email');
-
-app.post('/api/send-email', async (req, res) => {
-  try {
-    // This executes the logic inside your send-email.js file
-    await sendEmailHandler(req, res);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
