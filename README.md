@@ -95,7 +95,7 @@ npm -v
    ```
 2. Navigate into the web directory:
    ```sh
-   cd beavgredients/web
+   cd Beavgredients/Web
    ```
 3. Install frontend dependencies:
    ```sh
@@ -115,11 +115,13 @@ With 2 terminals open:
 1. Terminal 1: Start the Backend
    From inside /web/api:
    ```sh
+   cd Beavgredients/Web/api
    node index.js
    ```
 2. Terminal 2: Start the frontend
    From inside /web
       ```sh
+   cd Beavgredients/Web
    npm run dev
    ```
 3. Open your browser and go to:
@@ -132,6 +134,7 @@ The application should now be running locally.
 
 To create a production build:
 ```sh
+cd Beavgredients/Web
 npm run build
 ```
 To start the production server locally:
