@@ -5,6 +5,7 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { useState } from "react";
+import { RecipeDetailModal } from "./RecipeDetailModal";
 
 const TEST_USER_ID = "cc83483f-40ee-47f1-87eb-62c962c279bc";
 
@@ -21,7 +22,20 @@ export function RecipeBrowser({ initialData, onAddToKart }: RecipeBrowserProps) 
   const [activeLetter, setActiveLetter] = useState("a")
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Modal state
+  const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleMealClick = (mealId: string) => {
+    setSelectedMealId(mealId);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedMealId(null);
+  };
 
   const fetchNewLetter = async (letter: string) => {
     setActiveLetter(letter);
@@ -35,26 +49,6 @@ export function RecipeBrowser({ initialData, onAddToKart }: RecipeBrowserProps) 
       console.error("Failed to fetch new letter:", err);
     }
   };
-
-  const fetchSearchResults = async (query: string) => {
-    // setActiveLetter(letter);
-    try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
-      const res = await fetch(`${apiBase}/api/search?mealName=${query}`);
-      const data = await res.json();
-      setRecipes(data);
-      setCurrentPage(1);
-    } catch (err) {
-      console.error("Failed to fetch search term:", err);
-    }
-  };
-
-  const handleFormSubmit = (e: any) => {
-    e.preventDefault(); 
-    if (searchTerm.trim()) {
-      fetchSearchResults(searchTerm);
-    }
-  }
 
   const alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
 
@@ -80,24 +74,16 @@ export function RecipeBrowser({ initialData, onAddToKart }: RecipeBrowserProps) 
       setIsLoading(false);
     }
   };
- // flex gap-3
+
   return (
     <div className="flex-1 flex flex-col h-screen">
       <div className="p-6 border-b">
         <h1 className="text-2xl font-semibold mb-4">Beavgredients</h1>
         <div className="flex gap-3">
-          <form onSubmit={handleFormSubmit} className="flex-1">
-            
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input 
-                placeholder="Find..." 
-                className="pl-10 w-full" 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </form>
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input placeholder="Find..." className="pl-10" />
+          </div>
 
           <div className="relative">
             <Button variant="outline" className="gap-2" onClick={() => setIsFilterOpen(!isFilterOpen)}>
@@ -140,6 +126,7 @@ export function RecipeBrowser({ initialData, onAddToKart }: RecipeBrowserProps) 
                 <div
                   key={recipe.id || recipe.idMeal || `recipe-${index}`}
                   className="border rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => handleMealClick(recipe.id || recipe.idMeal)}
                 >
                   <div className="aspect-video w-full overflow-hidden bg-gray-100">
                     <img src={recipeImage} alt={recipeName} className="w-full h-full object-cover" />
@@ -198,6 +185,13 @@ export function RecipeBrowser({ initialData, onAddToKart }: RecipeBrowserProps) 
           ))}
         </div>
       </div>
+
+      {/* Recipe Detail Modal */}
+      <RecipeDetailModal 
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        mealId={selectedMealId}
+      />
     </div>
   );
 }
