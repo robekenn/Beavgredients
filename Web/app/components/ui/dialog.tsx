@@ -1,11 +1,19 @@
+<<<<<<< HEAD
 // UI components from shadcn/ui (https://ui.shadcn.com/)
+=======
+>>>>>>> f6fbb99 (Apply local changes to enhancement/click-recipe, had to replace all files for it to work ig)
 "use client"
 
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
+<<<<<<< HEAD
 import { cn } from "@/app/components/ui/utils" // might be you, use to be @/lib/utils
 import { Button } from "@/app/components/ui/button" // changing this back to /app/components/ui just wanna see
+=======
+import { cn } from "@/lib/utils"
+import { Button } from "@/app/components/ui/button"
+>>>>>>> f6fbb99 (Apply local changes to enhancement/click-recipe, had to replace all files for it to work ig)
 import { XIcon } from "lucide-react"
 
 function Dialog({
@@ -73,7 +81,11 @@ function DialogContent({
             <Button
               variant="ghost"
               className="absolute top-2 right-2"
+<<<<<<< HEAD
               size="icon" // icon-sm to icon
+=======
+              size="icon"
+>>>>>>> f6fbb99 (Apply local changes to enhancement/click-recipe, had to replace all files for it to work ig)
             >
               <XIcon
               />
