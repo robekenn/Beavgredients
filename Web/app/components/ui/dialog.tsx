@@ -4,7 +4,7 @@
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/app/components/ui/utils" // might be you
 import { Button } from "@/app/components/ui/button" // changing this back to /app/components/ui just wanna see
 import { XIcon } from "lucide-react"
 
